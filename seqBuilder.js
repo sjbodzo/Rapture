@@ -1,7 +1,9 @@
-function seqBuilder(sequence) {
-  this.aminoAcid = sequence.chain[0];
+function seqBuilder(seq) {
+  //console.log("amino acid at 0 is type %o", sequence.aminoAcidChain[0].type);
+  console.log(seq.chain);
+  this.aminoAcid = seq.chain[0];
   function updateAminoAcid(i) {
-    this.aminoAcid = sequence.chain[i];
+    this.aminoAcid = aminoAcidChain[i];
   }
   function initCarbonAlpha() {
     aminoAcid.atoms[1].createMesh();
@@ -66,10 +68,26 @@ function seqBuilder(sequence) {
     aminoAcid.atoms[3].x = aminoAcid.atoms[0].x+calcX;
     scene.add(aminoAcid.atoms[3].mesh);
   }
-  function NitrogenToHydrogen() {
+  function NitrogenToHydrogen(stericToggle) {
+    calcLength = bondLengths['NH'].length * bondLengthScalar;
 
+    aminoAcid.atoms[4].createMesh();
+    aminoAcid.atoms[4].x = aminoAcid.atoms[3].x;
+    aminoAcid.atoms[4].y = aminoAcid.atoms[3].y+stericToggle*calcLength;
+    aminoAcid.atoms[4].z - aminoAcid.atoms[3].z;
+    scene.add(aminoAcid.atoms[4].mesh);
   }
-  function NitrogenToCarbonAlpha() {
+  function NitrogenToCarbonAlpha(i, stericToggle) {
+    prevAminoAcid = seq.chain[i-1];
+    prevNitrogen = prevAminoAcid.atoms[3];
+    calcLength = bondLengths['NCa'].length * bondLengthScalar;
+    calcX = Math.cos(tPlanarAngleInRad)*calcLength;
+    calcY = Math.sin(tPlanarAngleInRad)*calcLength;
 
+    aminoAcid.atoms[1].createMesh();
+    aminoAcid.atoms[1].x = prevNitrogen.x + calcX;
+    aminoAcid.atoms[1].y = prevNitrogen.y + stericToggle*calcY;
+    aminoAcid.atoms[1].z = prevNitrogen.z;
+    scene.add(aminoAcid.atoms[1].mesh);
   }
 }

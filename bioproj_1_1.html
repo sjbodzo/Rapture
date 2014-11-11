@@ -27,111 +27,121 @@
 
     <script src="./three.min.js" type="text/javascript"></script>
     <script src="./amino_acids.js" type="text/javascript"></script>
+    <script src="./amino_acid.js" type="text/javascript"></script>
     <script src="./sequence.js" type="text/javascript"></script>
+    <script src="./seqBuilder.js" type="text/javascript"></script>
     <script src="./jquery-2.1.1.min.js" type="text/javascript"></script>
     <script src="./jquery.requestAnimationFrame.min.js" type="text/javascript"></script>
     <script>
 
-    function addMouseHandler() {
-      var dom = renderer.domElement;
-      dom.addEventListener('click', onClick, false);
+function addMouseHandler() {
+  var dom = renderer.domElement;
+  dom.addEventListener('click', onClick, false);
+}
+
+function onClick(event) {
+  event.preventDefault();
+  //window.alert(event.screenX + ' ' + event.screenY);
+  //for (var i = 0, len = sequence.chain.length; i < len; i++) {
+    //sequence = new Sequence();
+    //TODO: create onClick, possibly for phi/psi modulation?
+    //window.alert(sequence.chain[i].type);
+  //}
+}
+
+function attachHandler(el, evtname, fn) {
+    if (el.addEventListener) {
+        el.addEventListener(evtname, fn.bind(el), false);
+    } else if (el.attachEvent) {
+        el.attachEvent('on' + evtname, fn.bind(el));
     }
+  }
+  attachHandler(window, "load", function(){
+       var ele = document.querySelector("input[name=amino_seq_input]");
+       attachHandler(ele, "invalid", function (e) {
+          this.setCustomValidity("");
+          if (!e.target.validity.valid) {
+            window.alert("Please input a valid amino acid sequence.");
+          }
+      });
+});
 
-    function onClick(event) {
-      event.preventDefault();
-      //window.alert(event.screenX + ' ' + event.screenY);
-      //for (var i = 0, len = sequence.chain.length; i < len; i++) {
-        //sequence = new Sequence();
-        //TODO: create onClick, possibly for phi/psi modulation?
-        //window.alert(sequence.chain[i].type);
-      //}
-    }
+  var scene, camera, renderer, radius, sequence;
+  radius = 0.4;
+  bondLengthScalar = 3; //used to exaggerate bond lengths for visual clarity
 
-    function attachHandler(el, evtname, fn) {
-        if (el.addEventListener) {
-            el.addEventListener(evtname, fn.bind(el), false);
-        } else if (el.attachEvent) {
-            el.attachEvent('on' + evtname, fn.bind(el));
-        }
-      }
-      attachHandler(window, "load", function(){
-           var ele = document.querySelector("input[name=amino_seq_input]");
-           attachHandler(ele, "invalid", function (e) {
-              this.setCustomValidity("");
-              if (!e.target.validity.valid) {
-                window.alert("Please input a valid amino acid sequence.");
-              }
-          });
-    });
+  function initScene() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera( 75, (0.5*window.innerWidth) / (0.5*window.innerHeight), 0.1, 1000 );
+    camera.position.z = 20;
+    camera.position.x = 1;
 
-      var scene, camera, renderer, radius, sequence;
+    var light = new THREE.DirectionalLight( 0xffffff, 1.5);
+    light.position.set(0, 0, 1);
+    scene.add(light);
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    addMouseHandler();
+  }
+
+  // SAMPLE INPUT: ADGIFILSAI
+  function processInputSeq() {
+    var inputStr = document.querySelector("input[name=amino_seq_input]").value.toUpperCase();
+    for (var i = 0, len = inputStr.length; i < len; i++) {
       sequence = new Sequence();
-      radius = 0.4;
+      console.log(sequence.currentX);
+      //sequence.aminoAcidChain = new Array();
+      sequence.aminoAcidChain[i] = new AminoAcid(identifyByLetter(inputStr.charAt(i)));
+      (sequence.aminoAcidChain[i]).fillAtoms();
+      console.log(i);
+      console.log(sequence.aminoAcidChain[i].type);
+      console.log(sequence.aminoAcidChain.length);
+      //window.alert(sequence.chain[i].type);
+    }
+    initScene();
+    console.log("drawing!");
+    sequence.drawSeq();
+  }
 
-      function initScene() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera( 75, (0.75*window.innerWidth) / (0.75*window.innerHeight), 0.1, 1000 );
-        camera.position.z = 20;
-        camera.position.x = 1;
+  function run() {
+    renderer.render(scene, camera);
 
-        var light = new THREE.DirectionalLight( 0xffffff, 1.5);
-        light.position.set(0, 0, 1);
-        scene.add(light);
+    for (var i = 0, len = sequence.chain.length; i < len; i++) {
+      //sequence.chain[i].mesh.rotation.x -= 0.01;
+      //sequence.chain[i].mesh.rotation.y -= 0.01;
+    }
 
-        renderer = new THREE.WebGLRenderer( { antialias: true } );
-        renderer.setSize( window.innerWidth, window.innerHeight );
-        document.body.appendChild( renderer.domElement );
+    // Ask for another frame
+    //requestAnimationFrame(run);
+  }
 
-        addMouseHandler();
-      }
+  function linkAtoms(i) {
+    var material = new THREE.LineBasicMaterial({ color: 0xffffff });
 
-      // SAMPLE INPUT: ADGIFILSAI
-      function processInputSeq() {
-        var inputStr = document.querySelector("input[name=amino_seq_input]").value.toUpperCase();
-        for (var i = 0, len = inputStr.length; i < len; i++) {
-          //sequence = new Sequence();
-          sequence.chain[i] = new AminoAcid(identifyByLetter(inputStr.charAt(i)));
-          //window.alert(sequence.chain[i].type);
-        }
-        initScene();
-        drawSequence();
-      }
+    AA1 = sequence.aminoAcidChain[i];
+    AA2 = sequence.aminoAcidChain[i-1];
 
-      function run() {
-        renderer.render( scene, camera );
+    var geometry = new THREE.Geometry();
+    geometry.vertices.push(
+      new THREE.Vector3( AA1.X, AA1.Y, AA1.Z ),
+      new THREE.Vector3( AA2.X, AA2.Y, AA2.Z )
+    );
 
-        for (var i = 0, len = sequence.chain.length; i < len; i++) {
-          //sequence.chain[i].mesh.rotation.x -= 0.01;
-          //sequence.chain[i].mesh.rotation.y -= 0.01;
-        }
+    var line = new THREE.Line( geometry, material );
+    scene.add( line );
+  }
 
-        // Ask for another frame
-        //requestAnimationFrame(run);
-      }
+  function render() {
+    requestAnimationFrame(render);
+    renderer.render(scene, camera);
+  }
 
-      function drawSequence() {
-        sequence.currentX = -1*sequence.chain.length*radius/2;
-        //window.alert(sequence.currentX);
-        //window.alert(window.innerWidth);
-        //window.alert(sequence.chain.length * radius);
-        for (var i = 0, len = sequence.chain.length; i < len; i++) {
-          scene.add(sequence.chain[i].mesh);
-          sequence.currentX += 2*radius;
-          sequence.chain[i].mesh.translateX(sequence.currentX);
-          sequence.chain[i].X = sequence.currentX;
-        }
-
-        run();
-      }
-
-      function render() {
-        requestAnimationFrame(render);
-        renderer.render(scene, camera);
-      }
-
-      function wipeCanvas() {
-        scene = new THREE.Scene();
-      }
+  function wipeCanvas() {
+    scene = new THREE.Scene();
+  }
 
     </script>
 
