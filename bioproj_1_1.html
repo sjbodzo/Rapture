@@ -66,7 +66,7 @@ function attachHandler(el, evtname, fn) {
       });
 });
 
-  var scene, camera, renderer, radius, sequence;
+  var scene, camera, renderer, radius, theSeq;
   radius = 0.4;
   bondLengthScalar = 3; //used to exaggerate bond lengths for visual clarity
 
@@ -85,31 +85,29 @@ function attachHandler(el, evtname, fn) {
     document.body.appendChild( renderer.domElement );
 
     addMouseHandler();
+    console.log("HOIOHOIHOH");
   }
 
   // SAMPLE INPUT: ADGIFILSAI
   function processInputSeq() {
     var inputStr = document.querySelector("input[name=amino_seq_input]").value.toUpperCase();
     for (var i = 0, len = inputStr.length; i < len; i++) {
-      sequence = new Sequence();
-      console.log(sequence.currentX);
-      //sequence.aminoAcidChain = new Array();
-      sequence.aminoAcidChain[i] = new AminoAcid(identifyByLetter(inputStr.charAt(i)));
-      (sequence.aminoAcidChain[i]).fillAtoms();
-      console.log(i);
-      console.log(sequence.aminoAcidChain[i].type);
-      console.log(sequence.aminoAcidChain.length);
+      theSeq = new Sequence();
+      theSeq.aminoAcidChain[i] = new AminoAcid(identifyByLetter(inputStr.charAt(i)));
+      (theSeq.aminoAcidChain[i]).fillAtoms();
+      console.log("TYPE? %s", theSeq.aminoAcidChain[i].type);
+      console.log("LENGTH? %i", theSeq.aminoAcidChain.length);
       //window.alert(sequence.chain[i].type);
     }
     initScene();
     console.log("drawing!");
-    sequence.drawSeq();
+    theSeq.drawSeq();
   }
 
   function run() {
     renderer.render(scene, camera);
 
-    for (var i = 0, len = sequence.chain.length; i < len; i++) {
+    for (var i = 0, len = theSeq.chain.length; i < len; i++) {
       //sequence.chain[i].mesh.rotation.x -= 0.01;
       //sequence.chain[i].mesh.rotation.y -= 0.01;
     }
@@ -121,8 +119,8 @@ function attachHandler(el, evtname, fn) {
   function linkAtoms(i) {
     var material = new THREE.LineBasicMaterial({ color: 0xffffff });
 
-    AA1 = sequence.aminoAcidChain[i];
-    AA2 = sequence.aminoAcidChain[i-1];
+    AA1 = theSeq.aminoAcidChain[i];
+    AA2 = theSeq.aminoAcidChain[i-1];
 
     var geometry = new THREE.Geometry();
     geometry.vertices.push(

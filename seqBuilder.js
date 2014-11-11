@@ -1,18 +1,23 @@
-function seqBuilder(seq) {
+function SeqBuilder(seq) {
   //console.log("amino acid at 0 is type %o", sequence.aminoAcidChain[0].type);
-  console.log(seq.chain);
+  console.log("%i", seq.currentX);
+  console.log("%i", seq.currentY);
+  console.log("%i", seq.currentZ);
+  console.log("%o", seq.aminoAcidChain);
+  console.log("%o", seq);
+  console.log(seq.chain[0]);
   this.aminoAcid = seq.chain[0];
-  function updateAminoAcid(i) {
-    this.aminoAcid = aminoAcidChain[i];
+  this.updateAminoAcid = new function(i) {
+    this.aminoAcid = seq.chain[i];
   }
-  function initCarbonAlpha() {
+  this.initCarbonAlpha = new function() {
     aminoAcid.atoms[1].createMesh();
     aminoAcid.atoms[1].x = sequence.currentX;
     aminoAcid.atoms[1].y = sequence.currentY;
     aminoAcid.atoms[1].z = sequence.currentZ;
     scene.add(aminoAcid.atoms[1].mesh);
   }
-  function CarbonAlphaToR(stericToggle) {
+  this.CarbonAlphaToR = new function(stericToggle) {
     //tetrahedral C -> rot movement in XZ-axis of ~109.5 (~1.91)
     calcLength = bondLengths['CaR'].length * bondLengthScalar;
     calcZ = calcLength*Math.sin(tetraHedralAngleInRad);
@@ -25,7 +30,7 @@ function seqBuilder(seq) {
     aminoAcid.atoms[5].z = aminoAcid.atoms[1].z+calcZ*stericToggle;
     scene.add(aminoAcid.atoms[5].mesh);
   }
-  function CarbonAlphaToH(stericToggle) {
+  this.CarbonAlphaToH = new function(stericToggle) {
     calcLength = bondLengths['CH'].length * bondLengthScalar;
     calcZ = calcLength*Math.sin(tetraHedralAngleInRad);
     calcY = calcLength*Math.cos(tetraHedralAngleInRad);
@@ -36,7 +41,7 @@ function seqBuilder(seq) {
     aminoAcid.atoms[2].z = aminoAcid.atoms[1].z-calcZ*stericToggle;
     scene.add(aminoAcid.atoms[2].mesh);
   }
-  function CarbonAlphaToCarbon(stericToggle) {
+  this.CarbonAlphaToCarbon = new function(stericToggle) {
     calcLength = bondLengths['CCa'].length * bondLengthScalar;
     calcX = Math.cos(tetraHedralAngleInRad)*calcLength;
     calcY = Math.sin(tetraHedralAngleInRad)*calcLength;
@@ -47,7 +52,7 @@ function seqBuilder(seq) {
     aminoAcid.atoms[0].z = aminoAcid.atoms[1].z;
     scene.add(aminoAcid.atoms[0].mesh);
   }
-  function CarbonToOxygen(stericToggle) {
+  this.CarbonToOxygen = new function(stericToggle) {
     //sp2 hybridized & e- delocalization via C-N bond and C-O bond (~120 deg)
     calcLength = bondLengths['CO'].length * bondLengthScalar;
 
@@ -57,7 +62,7 @@ function seqBuilder(seq) {
     aminoAcid.atoms[6].y = aminoAcid.atoms[0]+stericToggle*calcLength;
     scene.add(aminoAcid.atoms[6].mesh);
   }
-  function CarbonToNitrogen(stericToggle) {
+  this.CarbonToNitrogen = new function(stericToggle) {
     calcLength = bondLengths['CN'].length * bondLengthScalar;
     calcX = Math.cos(tPlanarAngleInRad)*calcLength;
     calcY = Math.sin(tPlanarAngleInRad)*calcLength;
@@ -68,7 +73,7 @@ function seqBuilder(seq) {
     aminoAcid.atoms[3].x = aminoAcid.atoms[0].x+calcX;
     scene.add(aminoAcid.atoms[3].mesh);
   }
-  function NitrogenToHydrogen(stericToggle) {
+  this.NitrogenToHydrogen = new function(stericToggle) {
     calcLength = bondLengths['NH'].length * bondLengthScalar;
 
     aminoAcid.atoms[4].createMesh();
@@ -77,7 +82,7 @@ function seqBuilder(seq) {
     aminoAcid.atoms[4].z - aminoAcid.atoms[3].z;
     scene.add(aminoAcid.atoms[4].mesh);
   }
-  function NitrogenToCarbonAlpha(i, stericToggle) {
+  this.NitrogenToCarbonAlpha = new function(i, stericToggle) {
     prevAminoAcid = seq.chain[i-1];
     prevNitrogen = prevAminoAcid.atoms[3];
     calcLength = bondLengths['NCa'].length * bondLengthScalar;

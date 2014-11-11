@@ -10,7 +10,7 @@ function Sequence() {
   this.drawSeq = new function() {
     //centers the sequence
     this.currentX = window.innerWidth/2;
-    this.seqBuilder = new seqBuilder({chain: this.aminoAcidChain});
+    this.seqBuilder = new SeqBuilder(this);
     seqBuilder.initCarbonAlpha();
     for (var i = 0, len = this.aminoAcidChain.length; i < len; i++) {
       seqBuilder.updateAminoAcid(i);
