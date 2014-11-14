@@ -7,7 +7,7 @@ function Sequence() {
   this.currentY = 0;
   this.currentZ = 0;
 
-  this.drawSeq = new function() {
+  this.drawSeq = function() {
     //centers the sequence
     this.currentX = window.innerWidth/2;
     this.seqBuilder = new SeqBuilder(this);
