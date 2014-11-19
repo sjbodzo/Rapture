@@ -4,26 +4,15 @@
     <style>canvas { width: 60%; height: 60% }</style>
   </head>
   <body>
-    <button type = "button" onclick = "wipeCanvas()" >
-      Clear Canvas
-    </button>
-    <button type = "button" onclick = "initScene()" >
-      Initialize
-    </button>
-    <button type = "button" onclick = "drawChildren()" >
-      Draw Children
-    </button>
-    <button type = "button" onclick = "updateModelByPhi(1, Math.PI/2)" >
-      UPHI5
-    </button>
+    <div width="20%">
+      <form action="javascript:zoom(-1, 1)">
+        <input type="image" src="zoom_in.png" alt="Zoom In" width="48" height="48">
+      </form>
 
-    <form action="javascript:zoom(-1, 1)">
-      <input type="image" src="zoom_in.png" alt="Zoom In" width="48" height="48">
-    </form>
-
-    <form action="javascript:zoom(1, 1)">
-      <input type="image" src="zoom_out.png" alt="Zoom In" width="48" height="48">
-    </form>
+      <form action="javascript:zoom(1, 1)">
+        <input type="image" src="zoom_out.png" alt="Zoom In" width="48" height="48">
+      </form>
+    </div>
 
     <form action="javascript:processInputSeq()">
       <input name = "amino_seq_input" id="seq_box" type ="text" autofocus
