@@ -101,15 +101,15 @@ function attachHandler(el, evtname, fn) {
     //sin theta = y / r
     var theta_i = Math.asin(camera.position.y/r);
     var theta_n = theta_i + magnitude;
-    console.log("OLD Z : %d", camera.position.z);
-    console.log("OLD Y : %d", camera.position.y);
+    console.log("OLD Z : %f", camera.position.z);
+    console.log("OLD Y : %f", camera.position.y);
     camera.position.z = r*Math.cos(theta_n);
     camera.position.y = r*Math.sin(theta_n);
     camera.lookAt(new THREE.Vector3( 0, 0, 0 ));
-    console.log("t_i,t_n -> %i,%i", theta_i, theta_n);
-    console.log("r = %d", r);
-    console.log("NEW Z : %d", camera.position.z);
-    console.log("NEW Y : %d", camera.position.y);
+    console.log("t_i,t_n -> %f,%f", theta_i, theta_n);
+    console.log("r = %f", r);
+    console.log("NEW Z : %f", camera.position.z);
+    console.log("NEW Y : %f", camera.position.y);
   }
 
   function camRotateAroundX(scalar, magnitude) {
