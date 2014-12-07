@@ -1,0 +1,56 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="theme.css">
+<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+<title>Bioinformatics Project</title>
+<style>canvas { width: 60%; height: 60% }</style>
+</head>
+
+<script src="./three.min.js" type="text/javascript"></script>
+<script src="./amino_acids.js" type="text/javascript"></script>
+<script src="./amino_acid.js" type="text/javascript"></script>
+<script src="./sequence.js" type="text/javascript"></script>
+<script src="./seqBuilder.js" type="text/javascript"></script>
+<script src="./jquery-2.1.1.min.js" type="text/javascript"></script>
+<script src="./jquery.requestAnimationFrame.min.js" type="text/javascript"></script>
+
+<script></script>
+
+<body>
+
+  <p><h2><h1>R</h1>eally <h1>A</h1>wesome <h1>P</h1>rotein <h1>T</h1>ool <h1>U</h1>'ll <h1>R</h1>eally <h1>E</h1>njoy</h2></p>
+
+<span>Welcome to Rapture, a class project inspired by Dr. Tamer Kahveci for the course
+    CAP5510 at the University of Florida. This project serves to teach me the basics
+    of Javascript, 3D modeling, protein sequencing, the PDB format, and HTML/CSS.
+    In addition, I hope you learn a thing or two about how proteins are made, because
+    knowing how they are composed tells us how a lot about how they function!</br></br>
+
+    Proteins are composed of amino acids. Amino acids are themselves composed of atoms.
+    Arguably the most important atom is known as the alpha carbon, which is bonded to a
+    hydrogen atom as well as several groups. These groups are the amino group, the
+    carboxyl group, and what is called the R group. The seasoned chemist will recognize
+    these are important groups in organic molecules. (The R group is special because it
+    refers to a collection of atoms that uniquely identifies each amino acid.) You can
+    view the structure of the 20 common amino acids <a href="common_aa.html">here</a>.</br></br>
+
+    The carboxyl group of one amino acid connects to the next amino acid's amino group.
+    This means that amino acids can link together and connect in long chains. To visualize
+    the general structure of what these repeating units look like you can view my sequence
+    input visualizer. This allows you to input a regular [valid] sequence of up to 20 amino
+    acids that are then shown to you, color coded, in three dimensional space. Valid input
+    is constituted as one of the 20 common amino acids mentioned previously, using their single
+    letter abbreviations. The sequence input visualizer is available <a href="seq_input_modeling.html">here</a>.</br></br>
+
+    There are several prominent file formats used in bioinformatics, including the FASTA format
+    as well as PDB, FASTQ, SFF, GCG, et cetera. The PDB file format is of particular interest,
+    as it is included for an impressive collection of proteins freely available to us at the
+    RCSB Protein Data Bank website (rcsb.org). PDB files commonly store a rich swath of data
+    for us to analyze and work with. To view the proteins represented in PDB files you can use
+    my File Input Visualization tool. This tool takes input from a local PDB file, parses the
+    information contained inside, and shows you a three dimensional representation of the protein.
+    This tool is available <a href="file_input_visualizer.html">here</a>.</br></br>
+    </span>
+
+</body>
+</html>

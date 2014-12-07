@@ -37,22 +37,28 @@ function Atom(name) {
     this.y = 0;
     this.z = 0;
 
+    //grayish
     if (name == 'C') {
       this.color = 0x6E6E6E;
     }
     //this is carbon alpha
+    //yellow
     else if (name == 'A') {
       this.color = 0xFFFF00;
     }
+    //blue
     else if (name == 'N') {
       this.color = 0x0101DF;
     }
+    //bubblegum pink
     else if (name == 'H') {
       this.color = 0xE2A9F3;
     }
+    //red
     else if (name == 'O') {
       this.color = 0xDF0101;
     }
+    //pukey green
     else {
       this.color = 0x393B0B;
     }

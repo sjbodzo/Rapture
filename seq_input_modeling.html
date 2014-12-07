@@ -1,127 +1,110 @@
 <html>
   <head>
+    <link rel="stylesheet" type="text/css" href="theme.css">
+    <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
     <title>Bioinformatics Project</title>
     <style>canvas { width: 60%; height: 60% }</style>
   </head>
-  <body>
-    <div width="20%">
-      <form action="javascript:zoom(-1, 1)">
-        <input type="image" src="zoom_in.png" alt="Zoom In" width="48" height="48">
-      </form>
 
-      <form action="javascript:zoom(1, 1)">
-        <input type="image" src="zoom_out.png" alt="Zoom In" width="48" height="48">
-      </form>
-    </div>
+  <script src="./three.min.js" type="text/javascript"></script>
+  <script src="./amino_acids.js" type="text/javascript"></script>
+  <script src="./amino_acid.js" type="text/javascript"></script>
+  <script src="./sequence.js" type="text/javascript"></script>
+  <script src="./seqBuilder.js" type="text/javascript"></script>
+  <script src="./jquery-2.1.1.min.js" type="text/javascript"></script>
+  <script src="./jquery.requestAnimationFrame.min.js" type="text/javascript"></script>
+  <script src="./trackballcontrols.js" type="text/javascript"></script>
+  <script>
+  function addMouseHandler() {
+    var dom = renderer.domElement;
+    dom.addEventListener('click', onClick, false);
+  }
 
-    <form action="javascript:processInputSeq()">
-      <input name = "amino_seq_input" id="seq_box" type ="text" autofocus
-             maxlength ="20" pattern ="[GAVLIPFYWSTCMNQKRHDEgavlipfywstcmnqkrhde]{0,20}">
-        Input AA SEQ (0-20)
-      </input>
-      <input type="submit" value="Run" />
-    </form>
-
-    <script src="./three.min.js" type="text/javascript"></script>
-    <script src="./amino_acids.js" type="text/javascript"></script>
-    <script src="./amino_acid.js" type="text/javascript"></script>
-    <script src="./sequence.js" type="text/javascript"></script>
-    <script src="./seqBuilder.js" type="text/javascript"></script>
-    <script src="./jquery-2.1.1.min.js" type="text/javascript"></script>
-    <script src="./jquery.requestAnimationFrame.min.js" type="text/javascript"></script>
-    <script>
-
-function addMouseHandler() {
-  var dom = renderer.domElement;
-  dom.addEventListener('click', onClick, false);
-}
-
-function onClick(event) {
-  event.preventDefault();
-  //window.alert(event.screenX + ' ' + event.screenY);
-  //for (var i = 0, len = sequence.chain.length; i < len; i++) {
+  function onClick(event) {
+    event.preventDefault();
+    //window.alert(event.screenX + ' ' + event.screenY);
+    //for (var i = 0, len = sequence.chain.length; i < len; i++) {
     //sequence = new Sequence();
     //TODO: create onClick, possibly for phi/psi modulation?
     //window.alert(sequence.chain[i].type);
-  //}
-}
+    //}
+  }
 
-function attachHandler(el, evtname, fn) {
+  function attachHandler(el, evtname, fn) {
     if (el.addEventListener) {
-        el.addEventListener(evtname, fn.bind(el), false);
+      el.addEventListener(evtname, fn.bind(el), false);
     } else if (el.attachEvent) {
-        el.attachEvent('on' + evtname, fn.bind(el));
+      el.attachEvent('on' + evtname, fn.bind(el));
     }
   }
   attachHandler(window, "load", function(){
-       var ele = document.querySelector("input[name=amino_seq_input]");
-       attachHandler(ele, "invalid", function (e) {
-          this.setCustomValidity("");
-          if (!e.target.validity.valid) {
-            window.alert("Please input a valid amino acid sequence.");
-          }
-      });
-});
+    var ele = document.querySelector("input[name=amino_seq_input]");
+    attachHandler(ele, "invalid", function (e) {
+      this.setCustomValidity("");
+      if (!e.target.validity.valid) {
+        window.alert("Please input a valid amino acid sequence.");
+      }
+    });
+  });
 
-  var scene, camera, renderer, radius, theSeq;
-  radius = 0.1;
-  bondLengthScalar = 1.1; //used to exaggerate bond lengths for visual clarity
+  var scene, camera, renderer, radius, theSeq, axes, grp, rotSpeed, softlight, NUM_STEPS;
+  var do_rot_x, do_rot_y, do_rot_z; //bool flags for axes rotations in request animation caller
+  do_rot_x = false;
+  do_rot_y = false;
+  do_rot_z = false;
+  radius = 0.35;
+  NUM_STEPS = 200;
+  bondLengthScalar = 0.8; //used to exaggerate bond lengths for visual clarity
+
 
   function initScene() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, (window.innerWidth) / (window.innerHeight), 0.1, 1000 );
     camera.position.z = 10;
-    camera.position.x = -6;
+    camera.position.x = 0;
     camera.position.y = 0;
 
     var light = new THREE.DirectionalLight( 0xffffff, 1.5);
-    //var light = new THREE.AmbientLight(0xffffff);
-    light.position.set(0, 0, 1);
+    light.position.set(0, 2, 2);
     scene.add(light);
+
+    //add soft light
+    softlight = new THREE.AmbientLight( 0x404040 ); // soft white light
+    scene.add(softlight);
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setSize( window.innerWidth/1.5, window.innerHeight/1.5 );
-    document.body.appendChild( renderer.domElement );
+    var node = document.getElementById("renderBody");
+    node.appendChild(renderer.domElement);
 
-    addMouseHandler();
     console.log("Scene initialized...");
   }
 
-  function zoom(scalar, magnitude) {
-    console.log("Former z = %i", camera.position.z);
-    camera.position.z += (scalar*magnitude);
-    console.log("New z = %i", camera.position.z);
-    run();
+  function zoom(scalar, magnitude) { camera.position.z += (scalar*magnitude); }
+
+  function clearScene() {
+    scene.children = [scene.children[0], scene.children[1], scene.children[2]];
+    theSeq = null;
   }
 
-  function camRotateAroundY(scalar, magnitude) {
-    //z^2 + y^2 = r^2
-    var r = Math.sqrt(camera.position.z*camera.position.z +
-                      camera.position.y* camera.position.y);
-    //sin theta = y / r
-    var theta_i = Math.asin(camera.position.y/r);
-    var theta_n = theta_i + magnitude;
-    console.log("OLD Z : %f", camera.position.z);
-    console.log("OLD Y : %f", camera.position.y);
-    camera.position.z = r*Math.cos(theta_n);
-    camera.position.y = r*Math.sin(theta_n);
-    camera.lookAt(new THREE.Vector3( 0, 0, 0 ));
-    console.log("t_i,t_n -> %f,%f", theta_i, theta_n);
-    console.log("r = %f", r);
-    console.log("NEW Z : %f", camera.position.z);
-    console.log("NEW Y : %f", camera.position.y);
+  var rotWorldMatrix;
+  // Rotate an object around an arbitrary axis in world space
+  function rotateAroundWorldAxis(object, axis, radians) {
+    rotWorldMatrix = new THREE.Matrix4();
+    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+    rotWorldMatrix.multiply(object.matrix);
+    object.matrix = rotWorldMatrix;
+    object.rotation.setFromRotationMatrix(object.matrix);
+    console.log("grp post rot: %o", object);
   }
 
-  function camRotateAroundX(scalar, magnitude) {
-    //z^2 + x^2 = r^2
-    var r = Math.sqrt(camera.position.z*camera.position.z +
-                      camera.position.x* camera.position.x);
-    //sin theta = y / r
-    var theta_i = Math.asin(camera.position.z/r);
-    var theta_n = theta_i + magnitude;
-    camera.position.x = r*Math.cos(theta_n);
-    camera.position.z = r*Math.sin(theta_n);
-    camera.lookAt(new THREE.Vector3( 0, 0, 0 ));
+  //TESTING ROT AROUND X
+  function triggerRotateByPhi(angle) {
+    //theSeq.rotateByPhi(angle);
+    //theSeq.rotateAboutZ(Math.PI/2);
+    //camRotateAroundZ(Math.PI/20);
+    var xAxis = new THREE.Vector3(1,0,0);
+    rotateAroundWorldAxis(camera, xAxis, Math.PI/100);
   }
 
   // SAMPLE INPUT: ADGIFILSAI
@@ -135,64 +118,18 @@ function attachHandler(el, evtname, fn) {
       console.log("Sequence push of -> %o", theSeq.aminoAcidChain[i]);
       (theSeq.aminoAcidChain[i]).fillAtoms();
     }
-    initScene();
     theSeq.drawSeq();
-
-    document.addEventListener('keydown', function(event) {
-        if(event.keyCode == 87) {
-          //w key pressed (+y) -- pan up
-          camera.position.y += (1);
-        }
-        else if(event.keyCode == 65) {
-          //a key pressed (-x) -- strafe left
-          camera.position.x += (-1);
-        }
-        else if(event.keyCode == 83) {
-          //s key pressed (-y) -- pan down
-          camera.position.y += (-1);
-        }
-        else if(event.keyCode == 68) {
-          //d key pressed (+x) -- strafe right
-          camera.position.x += (1);
-        }
-        else if(event.keyCode == 81) {
-          //q key pressed (+z) -- zooms in
-          zoom(-1,1);
-        }
-        else if(event.keyCode == 69) {
-          //e key pressed (-z) -- zooms out
-          zoom(1,1);
-        }
-        else if(event.keyCode == 37) {
-          //left arrow key pressed -- -rot. around Y
-          camRotateAroundY(-1, Math.PI/20);
-        }
-        else if(event.keyCode == 38) {
-          //up arrow key pressed -- +rot. around X
-          camRotateAroundX(1, Math.PI/20);
-        }
-        else if(event.keyCode == 39) {
-          //right arrow key pressed -- +rot. around Y
-          camRotateAroundY(1, Math.PI/20);
-        }
-        else if(event.keyCode == 40) {
-          //down arrow key pressed -- -rot. around X
-          camRotateAroundX(-1, Math.PI/20);
-        }
-        run();
-    });
   }
 
   function run() {
     renderer.render(scene, camera);
 
-    for (var i = 0, len = theSeq.aminoAcidChain.length; i < len; i++) {
-      //sequence.chain[i].mesh.rotation.x -= 0.01;
-      //sequence.chain[i].mesh.rotation.y -= 0.01;
-    }
+    if(do_rot_y) theSeq.rotateAboutY(Math.PI/NUM_STEPS);
+    if(do_rot_z) theSeq.rotateAboutZ(Math.PI/NUM_STEPS);
+    if(do_rot_x) theSeq.rotateAboutX(Math.PI/NUM_STEPS);
 
     // Ask for another frame
-    //requestAnimationFrame(run);
+    requestAnimationFrame(run);
   }
 
   function linkAtoms(i) {
@@ -203,24 +140,102 @@ function attachHandler(el, evtname, fn) {
 
     var geometry = new THREE.Geometry();
     geometry.vertices.push(
-      new THREE.Vector3( AA1.X, AA1.Y, AA1.Z ),
-      new THREE.Vector3( AA2.X, AA2.Y, AA2.Z )
+    new THREE.Vector3( AA1.X, AA1.Y, AA1.Z ),
+    new THREE.Vector3( AA2.X, AA2.Y, AA2.Z )
     );
 
     var line = new THREE.Line( geometry, material );
     scene.add( line );
   }
 
-  function render() {
-    requestAnimationFrame(render);
-    renderer.render(scene, camera);
-  }
+  $(function() {
+    console.log( "ready!" );
+    initScene();
+    document.addEventListener('keydown', function(event) {
+      if(event.keyCode == 87) {
+        //w key pressed (+y) -- pan up
+        camera.position.y += (1);
+      }
+      else if(event.keyCode == 65) {
+        //a key pressed (-x) -- strafe left
+        camera.position.x += (-1);
+      }
+      else if(event.keyCode == 83) {
+        //s key pressed (-y) -- pan down
+        camera.position.y += (-1);
+      }
+      else if(event.keyCode == 68) {
+        //d key pressed (+x) -- strafe right
+        camera.position.x += (1);
+      }
+      else if(event.keyCode == 81) {
+        //q key pressed (+z) -- zooms in
+        zoom(-1,1);
+      }
+      else if(event.keyCode == 69) {
+        //e key pressed (-z) -- zooms out
+        zoom(1,1);
+      }
+      else if(event.keyCode == 37) {
+        //left arrow
+        do_rot_y = !(do_rot_y);
+      }
+      else if(event.keyCode == 38) {
+        //up arrow
+        do_rot_x = !(do_rot_x);
+      }
+      else if(event.keyCode == 39) {
+        //right arrow
+        do_rot_x = !(do_rot_x);
+        do_rot_y = !(do_rot_y);
+        do_rot_z = !(do_rot_z);
+      }
+      else if(event.keyCode == 40) {
+        //down arrow
+        do_rot_z = !(do_rot_z);
+      }
+    });
+  });
 
-  function wipeCanvas() {
-    scene = new THREE.Scene();
-  }
+</script>
 
-    </script>
+  <body>
+
+    <div id="titleBody">
+      <span id="theTitle"><h1>Sequence Input Visualization</h1></span>
+    </div>
+
+    <div id="renderBody">
+    </div>
+
+    <div id="mainBody">
+      <span id="spanBox">
+        To begin, input a sequence of amino acids by using their corresponding letter codes.
+        After you click run the sequence will appear. You can manipulate the phi and psi angles
+        respectively, and see the changes these rotations produce.
+      </span></br>
+
+      <!--
+      <div width="50%">
+        <form action="javascript:zoom(-1, 1)">
+          <input type="image" src="zoom_in.png" alt="Zoom In" width="48" height="48">
+        </form>
+
+        <form action="javascript:zoom(1, 1)">
+          <input type="image" src="zoom_out.png" alt="Zoom In" width="48" height="48">
+        </form>
+      </div>
+      -->
+
+      <form action="javascript:processInputSeq()">
+        <input name = "amino_seq_input" id="seq_box" type ="text" autofocus
+        maxlength ="20" pattern ="[GAVLIPFYWSTCMNQKRHDEgavlipfywstcmnqkrhde]{0,20}">
+        </input>
+        <input type="submit" value="Run" />
+      </form>
+
+      <button onclick="javascript:clearScene()">Clear</button>
+    </div>
 
   </body>
 </html>

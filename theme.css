@@ -25,10 +25,16 @@ div#renderBody {
 }
 
 div#swatch_holder {
-  width: 45%;
+  float: left;
+  width: 95%;
 }
 
 div#swatches {
-  width:  20%;
+  float: left;
+  width:  99%;
   height: 5%;
 }
+
+.lined { display : inline; }
+h1 { display: inline }
+span { display: inline }
