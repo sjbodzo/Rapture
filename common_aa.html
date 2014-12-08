@@ -15,25 +15,6 @@
 <script src="./jquery.requestAnimationFrame.min.js" type="text/javascript"></script>
 <script>
 
-$(function() {
-  console.log( "ready!" );
-  initScene();
-});
-
-function onClick(event) {
-  event.preventDefault();
-  console.log("z = %f", camera.position.z);
-  camera.position.z = -1*camera.position.z;
-  console.log("z = %f", camera.position.z);
-  camera.lookAt(new THREE.Vector3( 0, 0, 0 ));
-  run();
-}
-
-function addMouseHandler() {
-  var dom = renderer.domElement;
-  dom.addEventListener('click', onClick, false);
-}
-
 function attachHandler(el, evtname, fn) {
   if (el.addEventListener) {
     el.addEventListener(evtname, fn.bind(el), false);
@@ -52,31 +33,250 @@ attachHandler(window, "load", function() {
   });
 });
 
-var scene, camera, renderer, radius, theSeq, ms;
+var scene, camera, renderer, radius, theSeq, ms, do_rot_x, do_rot_y, do_rot_z;
+var NUM_STEPS = 175;
+do_rot_z = false; do_rot_x = false; do_rot_y = false;
 radius = 0.35;
-bondLengthScalar = 0.8; //used to exaggerate bond lengths for visual clarity
+
+var dir_map = { 'G': '[DFD][+p(1.9111)+a(0.5235)D]',
+                'A': 'value2',
+                'V': 'value2',
+                'L': 'value2',
+                'I': 'value2',
+                'P': 'value2',
+                'F': 'value2',
+                'Y': 'value2',
+                'W': 'value2',
+                'S': 'value2',
+                'T': 'value2',
+                'C': 'value2',
+                'M': 'value2',
+                'N': 'value2',
+                'Q': 'value2',
+                'K': 'value2',
+                'R': 'value2',
+                'H': 'value2',
+                'D': 'value2',
+                'E': 'value2' };
+
+var atom_map = {'G': 'ANC',
+                'A': 'value2',
+                'V': 'value2',
+                'L': 'value2',
+                'I': 'value2',
+                'P': 'value2',
+                'F': 'value2',
+                'Y': 'value2',
+                'W': 'value2',
+                'S': 'value2',
+                'T': 'value2',
+                'C': 'value2',
+                'M': 'value2',
+                'N': 'value2',
+                'Q': 'value2',
+                'K': 'value2',
+                'R': 'value2',
+                'H': 'value2',
+                'D': 'value2',
+                'E': 'value2' };
+
+var atomic_seq = [];
+
+function run() {
+  renderer.render(scene, camera);
+
+  if(do_rot_y) rotateAboutY(Math.PI/NUM_STEPS);
+  if(do_rot_z) rotateAboutZ(Math.PI/NUM_STEPS);
+  if(do_rot_x) rotateAboutX(Math.PI/NUM_STEPS);
+
+  // Ask for another frame
+  requestAnimationFrame(run);
+}
+function zoom(scalar, magnitude) { camera.position.z += (scalar*magnitude); }
+
+function turtlegfx() {
+  //Reference mapping of value to directions to draw, and atom draw sequence.
+  var inputVal = document.querySelector("select[id='acid_select']").value.toUpperCase();
+  var directions = dir_map[inputVal];
+  var drawingOrder = atom_map[inputVal];
+  var cur_x, cur_y, cur_z; //For keeping track while drawing
+  cur_x = 1; cur_y = 1; cur_z = 1;
+  var distance_unit = 0.85; //How long a sigma bond is in canvas space
+  var atom_stack = []; //Store Vector3 objs denoting position at time of push.
+
+  //Relinquish focus from input.
+  $('select#acid_select').blur();
+
+  //Interpret instructions char by char.
+  var b = 0; //Counter for drawingOrder
+  for (var a = 0; a < directions.length; a++) {
+    var letter = directions.charAt(a);
+    if (letter == 'D') {
+      drawAtom(drawingOrder[b], cur_x, cur_y, cur_z);
+      b++;
+    }
+    else if(letter == 'F') {
+      var dist = Math.sqrt(cur_x*cur_x + cur_y*cur_y + cur_z*cur_z);
+      var azimuthal_angle = Math.atan2(cur_y, cur_x);
+      var polar_angle = Math.atan2(cur_y, cur_z);
+      var calc_x = Math.sin(polar_angle)*Math.cos(azimuthal_angle)*dist;
+      var new_x = Math.sin(polar_angle)*Math.cos(azimuthal_angle)*(dist+distance_unit);
+      console.log("actual x = %f", cur_x);
+      console.log("__calc x = %f", calc_x);
+      console.log("___new x = %f", new_x);
+    }
+    else if(letter == '[') {
+      atom_stack.push(new THREE.Vector3(cur_x, cur_y, cur_z));
+    }
+    else if(letter == ']') {
+      var fetched_vector = atom_stack.pop();
+      cur_x = fetched_vector.x;
+      cur_y = fetched_vector.y;
+      cur_z = fetched_vector.z;
+    }
+    else if(letter == '+' || letter == '-') {
+      var the_axis = directions[a+1];
+      var val_str = "";
+      var val_num = "";
+      for (var m = a+3; directions[m] != ')'; m++) {
+        val_str += directions[m];
+      }
+      val_num = parseFloat(val_str);
+      if (the_axis == 'p') {
+        //Calculate current angles and r for polar calculations.
+        var dist = Math.sqrt(cur_x*cur_x + cur_y*cur_y + cur_z*cur_z);
+        var azimuthal_angle = Math.atan2(cur_y, cur_x);
+        var polar_angle;
+        if (the_axis == '+') { polar_angle = Math.atan2(cur_y, cur_z) + val_num; }
+        else if (the_axis == '-') { polar_angle = Math.atan2(cur_y, cur_z) - val_num; }
+        cur_x = dist*Math.sin(polar_angle)*Math.cos(azimuthal_angle);
+        cur_y = dist*Math.sin(polar_angle)*Math.sin(azimuthal_angle);
+        cur_z = dist*Math.cos(polar_angle);
+      }
+      else if (the_axis == 'a') {
+        //Calculate current angles and r for polar calculations.
+        var dist = Math.sqrt(cur_x*cur_x + cur_y*cur_y + cur_z*cur_z);
+        var polar_angle = Math.atan2(cur_y, cur_z);
+        var azimuthal_angle;
+        if (the_axis == '+') { azimuthal_angle = Math.atan2(cur_y, cur_x) + val_num; }
+        else if (the_axis == '-') { azimuthal_angle = Math.atan2(cur_y, cur_x) - val_num; }
+        cur_x = dist*Math.sin(polar_angle)*Math.cos(azimuthal_angle);
+        cur_y = dist*Math.sin(polar_angle)*Math.sin(azimuthal_angle);
+        cur_z = dist*Math.cos(polar_angle);
+      }
+      a = m; //Move fwd over these values in outer loop
+    }
+  }
+}
+
+function drawAtom(letter, a, b, c) {
+  //Determine the color.
+  var the_color;
+  if (letter == "C") { the_color = 0x6E6E6E; }      //gray
+  else if (letter == "A") { the_color = 0x000000; } //black
+  else if (letter == "N") { the_color = 0x0101DF; } //blue
+  else if (letter == "H") { the_color = 0xFFFFFF; } //white
+  else if (letter == "O") { the_color = 0xDF0101; } //red
+  else { the_color = 0x00c247; }                    //greenish
+
+  //Create the atom & add it to the scene.
+  var geometry = new THREE.SphereGeometry(0.15, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: the_color});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = a;
+  my_atom.position.y = b;
+  my_atom.position.z = c;
+  scene.add(my_atom);
+
+  //Push the atom to atomic_seq for later ref.
+  atomic_seq.push(my_atom);
+}
 
 function initScene() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera( 75, (window.innerWidth) / (window.innerHeight), 0.1, 1000 );
-  camera.position.z = 10;
-  camera.position.x = -6;
-  camera.position.y = 0;
+  camera.position.z = 4;
+  camera.position.x = 1;
+  camera.position.y = 1;
 
   var light = new THREE.DirectionalLight( 0xffffff, 1.5);
   //var light = new THREE.AmbientLight(0xffffff);
   light.position.set(0, 0, 1);
   scene.add(light);
 
-  renderer = new THREE.WebGLRenderer( { antialias: true } );
+  renderer = new THREE.WebGLRenderer( { antialias: true,alpha: true} );
   renderer.setSize( window.innerWidth/1.5, window.innerHeight/1.5 );
+  renderer.setClearColor( 0xffffff, 1);
   var node = document.getElementById("renderBody");
   node.appendChild(renderer.domElement);
 
-  addMouseHandler();
   console.log("Scene initialized...");
-  renderer.render(scene, camera);
+  run();
+}
 
+function rotateAboutY(angle) {
+  var rot_cos = Math.cos(angle);
+  var rot_sin = Math.sin(angle);
+  var x1,y1,z1;
+
+  for (var a = 2; a < atomic_seq.length+2; a++) {
+    x1 = atomic_seq[a-2].position.x;
+    y1 = atomic_seq[a-2].position.y;
+    z1 = atomic_seq[a-2].position.z;
+
+    scene.children[a].position.z = atomic_seq[a-2].position.z*rot_cos + atomic_seq[a-2].position.x*rot_sin;
+    scene.children[a].position.x = atomic_seq[a-2].position.x*rot_cos - atomic_seq[a-2].position.z*rot_sin;
+
+    //Update stored coordinate in maps
+    atomic_seq[a-2].position.z = scene.children[a].position.z;
+    atomic_seq[a-2].position.y = scene.children[a].position.y;
+    atomic_seq[a-2].position.x = scene.children[a].position.x;
+  }
+}
+
+function rotateAboutX(angle) {
+  var rot_cos = Math.cos(angle);
+  var rot_sin = Math.sin(angle);
+  var x1,y1,z1;
+
+  for (var a = 2; a < atomic_seq.length+2; a++) {
+    x1 = atomic_seq[a-2].position.x;
+    y1 = atomic_seq[a-2].position.y;
+    z1 = atomic_seq[a-2].position.z;
+
+    scene.children[a].position.z = atomic_seq[a-2].position.z*rot_cos - atomic_seq[a-2].position.y*rot_sin;
+    scene.children[a].position.y = atomic_seq[a-2].position.y*rot_cos + atomic_seq[a-2].position.z*rot_sin;
+
+    //Update stored coordinate in maps
+    atomic_seq[a-2].position.z = scene.children[a].position.z;
+    atomic_seq[a-2].position.y = scene.children[a].position.y;
+    atomic_seq[a-2].position.x = scene.children[a].position.x;
+  }
+}
+
+function rotateAboutZ(angle) {
+  var rot_cos = Math.cos(angle);
+  var rot_sin = Math.sin(angle);
+  var x1,y1,z1;
+
+  for (var a = 2; a < atomic_seq.length+2; a++) {
+    x1 = atomic_seq[a-2].position.x;
+    y1 = atomic_seq[a-2].position.y;
+    z1 = atomic_seq[a-2].position.z;
+
+    scene.children[a].position.y = atomic_seq[a-2].position.y*rot_cos + atomic_seq[a-2].position.x*rot_sin;
+    scene.children[a].position.x = atomic_seq[a-2].position.x*rot_cos - atomic_seq[a-2].position.y*rot_sin;
+
+    //Update stored coordinate in maps
+    atomic_seq[a-2].position.z = scene.children[a].position.z;
+    atomic_seq[a-2].position.y = scene.children[a].position.y;
+    atomic_seq[a-2].position.x = scene.children[a].position.x;
+  }
+}
+
+$(function() {
+  console.log( "ready!" );
+  initScene();
   document.addEventListener('keydown', function(event) {
     if(event.keyCode == 87) {
       //w key pressed (+y) -- pan up
@@ -102,59 +302,27 @@ function initScene() {
       //e key pressed (-z) -- zooms out
       zoom(1,1);
     }
-    run();
-  });
-}
-
-
-function zoom(scalar, magnitude) {
-  console.log("Former z = %i", camera.position.z);
-  camera.position.z += (scalar*magnitude);
-  console.log("New z = %i", camera.position.z);
-}
-
-function addMouseHandler() {
-  var dom = renderer.domElement;
-  dom.addEventListener('mouseup', onMouseUp, false);
-}
-
-function onMouseUp (event) {
-  event.preventDefault();
-  //console.log("x = %f", event.clientX);
-  //console.log("y = %f", event.clientY);
-}
-
-
-// SAMPLE INPUT: ADGIFILSAI
-function processInputSeq() {
-  //Initialize the sequence and fill the atoms in.
-  theSeq = new Sequence();
-  var inputStr = document.querySelector("select[id=acid_select]").value.toUpperCase();
-  (theSeq.aminoAcidChain).push(new AminoAcid(identifyByLetter(inputStr.charAt(0))));
-  (theSeq.aminoAcidChain[0]).fillAtoms();
-  theSeq.drawSeq();
-
-  //Relinquish focus from input.
-  $('select#acid_select').blur();
-
-  //if ()
-}
-
-function run() {
-  renderer.render(scene, camera);
-
-  /**
-  for (var i = 0, len = theSeq.aminoAcidChain.length; i < len; i++) {
-    for (var n = 0; n < theSeq.aminoAcidChain[i].length; n++) {
-      theSeq.aminoAcidChain[i].atoms[n].mesh.rotation.x -= 0.5;
-      theSeq.aminoAcidChain[i].atoms[n].mesh.rotation.y -= 0.5;
+    else if(event.keyCode == 37) {
+      //left arrow
+      do_rot_y = !(do_rot_y);
     }
-  }
-  **/
+    else if(event.keyCode == 38) {
+      //up arrow
+      do_rot_x = !(do_rot_x);
+    }
+    else if(event.keyCode == 39) {
+      //right arrow
+      do_rot_x = !(do_rot_x);
+      do_rot_y = !(do_rot_y);
+      do_rot_z = !(do_rot_z);
+    }
+    else if(event.keyCode == 40) {
+      //down arrow
+      do_rot_z = !(do_rot_z);
+    }
+  });
+});
 
-  // Ask for another frame
-  //requestAnimationFrame(run);
-}
 
 </script>
 
@@ -181,7 +349,8 @@ by what is known as the R group. The R group is a collection of atoms. It is a u
 each protein, and helps determine certain chemical properties of its amino acid (namely polarity and charge).
 </span></br></br>
 
-<select id="acid_select" onchange="javascript:processInputSeq()">
+<select id="acid_select" onchange="javascript:turtlegfx()">
+  <option value="">Select an option</option>
   <option value="G">G - Glycine</option>
   <option value="A">A - Alanine</option>
   <option value="V">V - Valine</option>
