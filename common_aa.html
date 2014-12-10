@@ -35,8 +35,9 @@ attachHandler(window, "load", function() {
 
 var scene, camera, renderer, radius, theSeq, ms, do_rot_x, do_rot_y, do_rot_z;
 var NUM_STEPS = 175;
+var has_drawn = false;
 do_rot_z = false; do_rot_x = false; do_rot_y = false;
-radius = 0.35;
+radius = 0.25;
 
 var dir_map = { 'G': '[DFD][+p(1.9111)+a(0.5235)D]',
                 'A': 'value2',
@@ -89,6 +90,10 @@ function run() {
   if(do_rot_z) rotateAboutZ(Math.PI/NUM_STEPS);
   if(do_rot_x) rotateAboutX(Math.PI/NUM_STEPS);
 
+  if(has_drawn) {
+    if(scene.children.length > 11) scene.children = scene.children.slice(0,11);
+    drawAtomBonds();
+  }
   // Ask for another frame
   requestAnimationFrame(run);
 }
@@ -147,8 +152,8 @@ function turtlegfx() {
         var dist = Math.sqrt(cur_x*cur_x + cur_y*cur_y + cur_z*cur_z);
         var azimuthal_angle = Math.atan2(cur_y, cur_x);
         var polar_angle;
-        if (the_axis == '+') { polar_angle = Math.atan2(cur_y, cur_z) + val_num; }
-        else if (the_axis == '-') { polar_angle = Math.atan2(cur_y, cur_z) - val_num; }
+        if (letter == '+') { polar_angle = Math.atan2(cur_y, cur_z) + val_num; }
+        else if (letter == '-') { polar_angle = Math.atan2(cur_y, cur_z) - val_num; }
         cur_x = dist*Math.sin(polar_angle)*Math.cos(azimuthal_angle);
         cur_y = dist*Math.sin(polar_angle)*Math.sin(azimuthal_angle);
         cur_z = dist*Math.cos(polar_angle);
@@ -158,8 +163,8 @@ function turtlegfx() {
         var dist = Math.sqrt(cur_x*cur_x + cur_y*cur_y + cur_z*cur_z);
         var polar_angle = Math.atan2(cur_y, cur_z);
         var azimuthal_angle;
-        if (the_axis == '+') { azimuthal_angle = Math.atan2(cur_y, cur_x) + val_num; }
-        else if (the_axis == '-') { azimuthal_angle = Math.atan2(cur_y, cur_x) - val_num; }
+        if (letter == '+') { azimuthal_angle = Math.atan2(cur_y, cur_x) + val_num; }
+        else if (letter == '-') { azimuthal_angle = Math.atan2(cur_y, cur_x) - val_num; }
         cur_x = dist*Math.sin(polar_angle)*Math.cos(azimuthal_angle);
         cur_y = dist*Math.sin(polar_angle)*Math.sin(azimuthal_angle);
         cur_z = dist*Math.cos(polar_angle);
@@ -180,7 +185,7 @@ function drawAtom(letter, a, b, c) {
   else { the_color = 0x00c247; }                    //greenish
 
   //Create the atom & add it to the scene.
-  var geometry = new THREE.SphereGeometry(0.15, 10, 10);
+  var geometry = new THREE.SphereGeometry(0.45, 10, 10);
   var material = new THREE.MeshPhongMaterial({color: the_color});
   var my_atom = new THREE.Mesh(geometry, material);
   my_atom.position.x = a;
@@ -195,9 +200,9 @@ function drawAtom(letter, a, b, c) {
 function initScene() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera( 75, (window.innerWidth) / (window.innerHeight), 0.1, 1000 );
-  camera.position.z = 4;
+  camera.position.z = 5;
   camera.position.x = 1;
-  camera.position.y = 1;
+  camera.position.y = -1;
 
   var light = new THREE.DirectionalLight( 0xffffff, 1.5);
   //var light = new THREE.AmbientLight(0xffffff);
@@ -251,6 +256,180 @@ function rotateAboutX(angle) {
     atomic_seq[a-2].position.z = scene.children[a].position.z;
     atomic_seq[a-2].position.y = scene.children[a].position.y;
     atomic_seq[a-2].position.x = scene.children[a].position.x;
+  }
+}
+
+function expdraw() {
+  scene.children = [scene.children[0], scene.children[1]];
+  atomic_seq = [];
+  var inputVal = document.querySelector("select[id='acid_select']").value.toUpperCase();
+
+  //Carbon Alpha
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0x000000});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = 0;
+  my_atom.position.y = 0;
+  my_atom.position.z = 0;
+  my_atom.name = "Carbon Alpha";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //R group
+  if (inputVal == 'G') {
+    var geometry = new THREE.SphereGeometry(radius, 10, 10);
+    var material = new THREE.MeshPhongMaterial({color: 0xFFFFF1});
+    var my_atom = new THREE.Mesh(geometry, material);
+    my_atom.position.x = 0;
+    my_atom.position.y = 1;
+    my_atom.position.z = 0;
+    my_atom.name = "R Group -- Hydrogen";
+    scene.add(my_atom);
+    atomic_seq.push(my_atom);
+  }
+  else if (inputVal == 'X') {
+    var geometry = new THREE.SphereGeometry(radius, 10, 10);
+    var material = new THREE.MeshPhongMaterial({color: 0x00c247});
+    var my_atom = new THREE.Mesh(geometry, material);
+    my_atom.position.x = 0;
+    my_atom.position.y = 1;
+    my_atom.position.z = 0;
+    my_atom.name = "R Group";
+    scene.add(my_atom);
+    atomic_seq.push(my_atom);
+  }
+
+  //Nitrogen
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0x0101DF});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = Math.sin(Math.PI/6);
+  my_atom.position.y = Math.sin(4*Math.PI/3);
+  my_atom.position.z = Math.cos(Math.PI/6);
+  my_atom.name = "Nitrogen";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //Hydrogen
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0xFFFFF1});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = Math.sin(5*Math.PI/6);
+  my_atom.position.y = Math.sin(4*Math.PI/3);
+  my_atom.position.z = Math.cos(5*Math.PI/6);
+  my_atom.name = "Hydrogen";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //Carbon Beta
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0x6E6E6E});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = Math.sin(3*Math.PI/2);
+  my_atom.position.y = Math.sin(4*Math.PI/3);
+  my_atom.position.z = Math.cos(3*Math.PI/2);
+  my_atom.name = "Carbon Beta";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //Hydrogens connected to Nitrogen
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0xFFFFF1});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = 2*Math.sin(0);
+  my_atom.position.y = 2*Math.sin(4*Math.PI/3);
+  my_atom.position.z = 2*Math.cos(0);
+  my_atom.name = "Nitrogen Hydrogen #1";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //Hydrogens connected to Nitrogen
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0xFFFFF1});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = 2*Math.sin(Math.PI/3);
+  my_atom.position.y = 2*Math.sin(4*Math.PI/3);
+  my_atom.position.z = 2*Math.cos(Math.PI/3);
+  my_atom.name = "Nitrogen Hydrogen #2";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //Oxygens connected to Carbon Beta (#1)
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0xDF0101});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = 2*Math.sin(4*Math.PI/3);
+  my_atom.position.y = 2*Math.sin(4*Math.PI/3);
+  my_atom.position.z = 2*Math.cos(4*Math.PI/3);
+  my_atom.name = "Carbon Beta Oxygen #1";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //Oxygens connected to Carbon Beta (#2)
+  var geometry = new THREE.SphereGeometry(radius, 10, 10);
+  var material = new THREE.MeshPhongMaterial({color: 0xDF0101});
+  var my_atom = new THREE.Mesh(geometry, material);
+  my_atom.position.x = 2*Math.sin(5*Math.PI/3);
+  my_atom.position.y = 2*Math.sin(4*Math.PI/3);
+  my_atom.position.z = 2*Math.cos(5*Math.PI/3);
+  my_atom.name = "Carbon Beta Oxygen #2";
+  scene.add(my_atom);
+  atomic_seq.push(my_atom);
+
+  //Flag to set for anim loop, makes sure atom bonds are
+  //drawn after atoms.
+  has_drawn = true;
+}
+
+function drawAtomBonds() {
+  //Carbon Alpha ref coords
+  var x1 = atomic_seq[0].position.x;
+  var y1 = atomic_seq[0].position.y;
+  var z1 = atomic_seq[0].position.z;
+
+  var material, geometry, x2, y2, z2;
+  for (var i = 1; i < 10; i++) {
+    material = new THREE.LineBasicMaterial({color: 0x000000});
+    geometry = new THREE.Geometry();
+    if (i == 5 || i == 6) {
+      x1 = atomic_seq[2].position.x;
+      y1 = atomic_seq[2].position.y;
+      z1 = atomic_seq[2].position.z;
+    }
+    else if (i == 7) {
+      x1 = atomic_seq[4].position.x;
+      y1 = atomic_seq[4].position.y;
+      z1 = atomic_seq[4].position.z;
+    }
+    if (i < 8) {
+      x2 = atomic_seq[i].position.x;
+      y2 = atomic_seq[i].position.y;
+      z2 = atomic_seq[i].position.z;
+    }
+    else {
+      if (i == 8) {
+        x1 = 0.95*atomic_seq[4].position.x;
+        y1 = 0.95*atomic_seq[4].position.y;
+        z1 = 0.95*atomic_seq[4].position.z;
+        x2 = 0.95*atomic_seq[i-1].position.x;
+        y2 = 0.95*atomic_seq[i-1].position.y;
+        z2 = 0.95*atomic_seq[i-1].position.z;
+      }
+      else if (i == 9) {
+        x1 = 1.05*atomic_seq[4].position.x;
+        y1 = 1.05*atomic_seq[4].position.y;
+        z1 = 1.05*atomic_seq[4].position.z;
+        x2 = 1.05*atomic_seq[i-1].position.x;
+        y2 = 1.05*atomic_seq[i-1].position.y;
+        z2 = 1.05*atomic_seq[i-1].position.z;
+      }
+    }
+    geometry.vertices.push(
+      new THREE.Vector3(x1, y1, z1),
+      new THREE.Vector3(x2, y2, z2)
+    );
+    var line = new THREE.Line( geometry, material );
+    scene.add(line);
   }
 }
 
@@ -347,12 +526,22 @@ of mapping DNA from a sequence of nucleotides to a protein. Thus by modeling the
 we are able to visualize the pieces that make up proteins in your body. These amino acids are distinguished
 by what is known as the R group. The R group is a collection of atoms. It is a unique identifier for
 each protein, and helps determine certain chemical properties of its amino acid (namely polarity and charge).
+</br></br>
+
+Using the dropdown below, make a selection to see an idealized ball and stick model of your selection. You can
+choose a specific amino acid as well as the generic formula that is common among all amino acids*.</br></br>
+
+How was this made? Angles and lengths were calculated according to VSEPR theory and the mathematics entailed therein.</br></br>
+
+* Note: The amino acid Proline is considered a special case amongst these 20 and, because of this classification,
+ its structure deviates from this slightly.
 </span></br></br>
 
-<select id="acid_select" onchange="javascript:turtlegfx()">
+<select id="acid_select" onchange="javascript:expdraw()">
   <option value="">Select an option</option>
+  <option value="X">Generic Formula</option>
   <option value="G">G - Glycine</option>
-  <option value="A">A - Alanine</option>
+  <!--<option value="A">A - Alanine</option>
   <option value="V">V - Valine</option>
   <option value="L">L - Leucine</option>
   <option value="I">I - Isoleucine</option>
@@ -370,7 +559,7 @@ each protein, and helps determine certain chemical properties of its amino acid 
   <option value="R">R - Arginine</option>
   <option value="H">H - Histidine</option>
   <option value="D">D - Aspartate</option>
-  <option value="E">E - Glutamate</option>
+  <option value="E">E - Glutamate</option>-->
 </select>
 
 </body>

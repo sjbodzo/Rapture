@@ -52,7 +52,7 @@
   do_rot_x = false;
   do_rot_y = false;
   do_rot_z = false;
-  radius = 0.35;
+  radius = 0.25;
   NUM_STEPS = 200;
   bondLengthScalar = 0.8; //used to exaggerate bond lengths for visual clarity
 
@@ -72,8 +72,10 @@
     softlight = new THREE.AmbientLight( 0x404040 ); // soft white light
     scene.add(softlight);
 
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true,alpha: true} );
     renderer.setSize( window.innerWidth/1.5, window.innerHeight/1.5 );
+    renderer.setClearColor( 0xffffff, 1);
     var node = document.getElementById("renderBody");
     node.appendChild(renderer.domElement);
 

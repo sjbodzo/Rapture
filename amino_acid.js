@@ -44,7 +44,7 @@ function Atom(name) {
     //this is carbon alpha
     //yellow
     else if (name == 'A') {
-      this.color = 0xFFFF00;
+      this.color = 0x000000;
     }
     //blue
     else if (name == 'N') {

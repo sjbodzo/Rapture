@@ -5,6 +5,10 @@ input[type=file] {
   margin-top: 20px;
   margin-left: 10px;
 }
+input[type=checkbox] {
+  margin-top: 5px;
+  margin-left: 10px;
+}
 body {
   width:90%;
   font-family: 'Oswald', sans-serif;
@@ -17,6 +21,8 @@ div#titleBody {
 div#mainBody {
   float: left;
   width: 30%;
+  height: 80%;
+  overflow-y: scroll;
 }
 
 div#renderBody {
