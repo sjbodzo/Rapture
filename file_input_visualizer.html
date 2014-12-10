@@ -123,11 +123,11 @@
         }
 
         function drawSimpleModel() {
-          if (document.getElementById("bx1").checked) {
+          if (document.getElementById("bx1").checked || (document.getElementById("bx1").disabled == true)) {
             document.getElementById("bx2").setAttribute("type", "checkbox");
             document.getElementById("s1").innerHTML = "Link Atoms?";
-            document.getElementById("bx3").setAttribute("type", "checkbox");
-            document.getElementById("s2").innerHTML = "Draw Mode?";
+            //document.getElementById("bx3").setAttribute("type", "checkbox");
+            //document.getElementById("s2").innerHTML = "Draw Mode?";
             var temp = bkup;
             bkup = "";
             bkup = scene.children;
@@ -136,8 +136,8 @@
           }
           else {
             isSimple = false;
-            document.getElementById("bx3").setAttribute("type", "hidden");
-            document.getElementById("s2").innerHTML = "";
+            //document.getElementById("bx3").setAttribute("type", "hidden");
+            //document.getElementById("s2").innerHTML = "";
             document.getElementById("bx2").setAttribute("type", "hidden");
             document.getElementById("s1").innerHTML = "";
             if (bkup != null) {
@@ -151,6 +151,7 @@
 
         function linkSimpleAtoms() {
           if (document.getElementById("bx2").checked) {
+            document.getElementById("bx1").disabled = true;
             var geometry, material; //(scene.children).length-2
             var nombre = seq_map.length;
             for (var i = 3; i < nombre+2; i++) {
@@ -171,6 +172,7 @@
             }
           }
           else {
+            document.getElementById("bx1").disabled = false;
             if (doWipe) scene.children = scene.children.slice(0, scene.children.length-(seq_map.length-1));
           }
         }
